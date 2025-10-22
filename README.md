@@ -26,14 +26,7 @@ O sistema permite:
 
 ## 📷 Interface do sistema
 > Aqui você pode adicionar prints da tela do seu projeto:
+https://github.com/Samuel-Silva-adm/MeuProjetoSpringBoot/blob/master/ImagemInterfaceVisual.png
 
 
 
-
----
-
-## ⚙️ Como executar o projeto localmente
-
-### 1️⃣ Clonar o repositório
-```bash
-git clone https://github.com/Samuel-Silva-adm/MeuProjetoSpringBoot.git
