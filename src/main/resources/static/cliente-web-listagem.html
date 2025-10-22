@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gerenciamento de Produtos</title>
+<style>
+  body{font-family:Arial, sans-serif;margin:20px;background:#f9f9f9}
+  h1{text-align:center;color:#333}
+  form, .filtros{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:20px}
+  input,button{padding:8px 10px;font-size:15px;border-radius:4px;border:1px solid #ccc}
+  button{cursor:pointer;border:none}
+  #btnAdd{background:#4CAF50;color:#fff}
+  #btnAdd:hover{background:#45a049}
+  .btnEditar{background:#2196F3;color:#fff}
+  .btnEditar:hover{background:#0b7dda}
+  .btnExcluir{background:#f44336;color:#fff}
+  .btnExcluir:hover{background:#da190b}
+  table{width:95%;margin:0 auto;border-collapse:collapse;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+  th,td{padding:10px 15px;border-bottom:1px solid #ddd;text-align:left}
+  th{background:#4CAF50;color:#fff}
+  tr:hover{background:#f1f1f1}
+  #total{text-align:center;margin-top:20px;font-size:18px;font-weight:bold;color:#333}
+  @media (max-width:600px){form,.filtros{flex-direction:column}table,th,td{font-size:14px}}
+</style>
+</head>
+<body>
+<h1>Gerenciamento de Produtos</h1>
+
+<!-- 🟩 Formulário -->
+<form id="formProduto">
+  <input type="hidden" id="produtoId">
+  <input id="nome" type="text" placeholder="Nome do produto" required>
+  <input id="preco" type="number" step="0.01" placeholder="Preço" required min="0">
+  <input id="quantidade" type="number" placeholder="Quantidade" required min="0">
+  <button id="btnAdd" type="submit">Adicionar Produto</button>
+</form>
+
+<!-- 🔍 Filtro por nome -->
+<div class="filtros">
+  <input type="text" id="filtroNome" placeholder="Filtrar por nome">
+  <button type="button" onclick="aplicarFiltroNome()">Filtrar</button>
+  <button type="button" onclick="limparFiltroNome()">Limpar</button>
+</div>
+
+<!-- 🧾 Tabela -->
+<table id="tabelaProdutos">
+  <thead>
+    <tr><th>ID</th><th>Nome</th><th>Preço (R$)</th><th>Quantidade</th><th>Ações</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div id="total">Total de produtos: 0 | Valor total: R$ 0,00</div>
+
+<script>
+(() => {
+  const tabela = document.querySelector("#tabelaProdutos tbody");
+  const total = document.getElementById("total");
+  const form = document.getElementById("formProduto");
+  const btnAdd = document.getElementById("btnAdd");
+  const filtroNome = document.getElementById("filtroNome");
+
+  // ⚙️ Ajuste a URL se necessário
+  const API_URL = "http://localhost:8080/produtos"; 
+
+  let produtosCache = [];
+
+  async function carregarProdutos() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Erro na requisição: ' + res.status + ' ' + res.statusText);
+      const produtos = await res.json();
+      produtosCache = Array.isArray(produtos) ? produtos : [];
+      renderizarTabela(produtosCache);
+    } catch (err) {
+      console.error('Erro ao carregar produtos:', err);
+      alert('Falha ao carregar produtos. Veja o console (F12) para detalhes.');
+    }
+  }
+
+  function renderizarTabela(produtos) {
+    tabela.innerHTML = '';
+    let valorTotal = 0;
+    produtos.forEach(produto => {
+      const id = produto.id ?? '';
+      const nome = produto.nome ?? '';
+      const preco = Number(produto.preco) || 0;
+      const quantidade = Number(produto.quantidade) || 0;
+
+      const linha = document.createElement('tr');
+      linha.innerHTML = `
+        <td>${id}</td>
+        <td>${escapeHtml(nome)}</td>
+        <td>${preco.toFixed(2)}</td>
+        <td>${quantidade}</td>
+        <td>
+          <button class="btnEditar" data-id="${id}" data-nome="${escapeAttr(nome)}" data-preco="${preco}" data-quant="${quantidade}">Editar</button>
+          <button class="btnExcluir" data-id="${id}">Excluir</button>
+        </td>`;
+      tabela.appendChild(linha);
+      valorTotal += preco * quantidade;
+    });
+    total.textContent = `Total de produtos: ${produtos.length} | Valor total: R$ ${valorTotal.toFixed(2)}`;
+
+    // eventos editar/excluir
+    tabela.querySelectorAll('.btnEditar').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const b = e.currentTarget;
+        document.getElementById('produtoId').value = b.dataset.id;
+        document.getElementById('nome').value = unescapeHtml(b.dataset.nome);
+        document.getElementById('preco').value = b.dataset.preco;
+        document.getElementById('quantidade').value = b.dataset.quant;
+        btnAdd.textContent = "Salvar Alterações";
+      });
+    });
+
+    tabela.querySelectorAll('.btnExcluir').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        const id = e.currentTarget.dataset.id;
+        if (!id) return alert('ID inválido');
+        if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+        try {
+          const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Falha ao excluir: ' + res.status);
+          carregarProdutos();
+        } catch (err) {
+          console.error(err);
+          alert('Erro ao excluir. Veja o console.');
+        }
+      });
+    });
+  }
+
+  // 🔍 Filtro por nome
+  window.aplicarFiltroNome = function() {
+    const termo = filtroNome.value.trim().toLowerCase();
+    if (!termo) return renderizarTabela(produtosCache);
+    const filtrados = produtosCache.filter(p => p.nome?.toLowerCase().includes(termo));
+    renderizarTabela(filtrados);
+  };
+
+  window.limparFiltroNome = function() {
+    filtroNome.value = '';
+    renderizarTabela(produtosCache);
+  };
+
+  // Proteção contra XSS
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[s]));
+  }
+  function unescapeHtml(s) {
+    return s.replace(/&quot;/g, '"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");
+  }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+  // 🟩 Salvar / Atualizar
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const id = document.getElementById('produtoId').value;
+      const nome = document.getElementById('nome').value.trim();
+      const preco = parseFloat(document.getElementById('preco').value);
+      const quantidade = parseInt(document.getElementById('quantidade').value, 10);
+
+      if (!nome) return alert('Nome é obrigatório');
+      if (isNaN(preco) || preco < 0) return alert('Preço inválido');
+      if (isNaN(quantidade) || quantidade < 0) return alert('Quantidade inválida');
+
+      const produto = { nome, preco, quantidade, disponivel: true };
+      const metodo = id ? 'PUT' : 'POST';
+      const url = id ? `${API_URL}/${id}` : API_URL;
+
+      const res = await fetch(url, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(produto)
+      });
+
+      if (!res.ok) {
+        let text;
+        try { text = await res.text(); } catch(e) { text = ''; }
+        throw new Error(`Erro ${res.status}: ${res.statusText} - ${text}`);
+      }
+
+      let hasJson = res.headers.get('content-type')?.includes('application/json');
+      if (hasJson) await res.json();
+
+      form.reset();
+      document.getElementById('produtoId').value = '';
+      btnAdd.textContent = 'Adicionar Produto';
+      carregarProdutos();
+    } catch (err) {
+      console.error('Erro ao salvar produto:', err);
+      alert('Erro ao salvar produto. Veja o console (F12).');
+    }
+  });
+
+  // 🚀 Inicializa
+  carregarProdutos();
+})();
+</script>
+</body>
+</html>
+
