@@ -28,6 +28,8 @@ O sistema permite:
 Segue uma imagem do meu projeto:
 https://github.com/Samuel-Silva-adm/MeuProjetoSpringBoot/blob/master/ImagemInterfaceVisual.png
 
+https://github.com/Samuel-Silva-adm/MeuProjetoSpringBoot/blob/master/InterfaceVisualDoProjeto.png
+
 ---
 
 ## 🖥️ Mais Sobre o projeto
