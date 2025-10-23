@@ -25,8 +25,19 @@ O sistema permite:
 ---
 
 ## 📷 Interface do sistema
-> Aqui você pode adicionar prints da tela do seu projeto:
+Segue uma imagem do meu projeto:
 https://github.com/Samuel-Silva-adm/MeuProjetoSpringBoot/blob/master/ImagemInterfaceVisual.png
+
+---
+
+## 🖥️ Mais Sobre o projeto
+  Durante meu aprendizado em Java, desenvolvi este sistema de gerenciamento de produtos, onde é possível cadastrar, editar, excluir e filtrar produtos.
+Além disso, o sistema exibe a quantidade total de itens listados e a soma dos valores de todos os produtos.
+
+Foi um projeto simples, mas de grande aprendizado e importância para meu desenvolvimento como programador.
+
+Atualmente, estou iniciando meu segundo projeto, totalmente autoral e muito especial para mim, pois tem como objetivo resolver um problema real enfrentado por igrejas da minha cidade.
+  
 
 
 
